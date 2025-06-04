@@ -21,13 +21,13 @@ def generate_incomplete_samples(dataset, missing_modality_rate=0.1):
         new_xs = []
         for v in range(len(xs)):
             if np.random.rand() < missing_modality_rate:
-                # 创建一个与原张量形状相同的全零张量来替代None
+                
                 if isinstance(xs[v], torch.Tensor):
-                    # 添加随机噪声以增强数据
+                    
                     zero_tensor = torch.randn_like(xs[v]) * 0.01
                     new_xs.append(zero_tensor)
                 else:
-                    # 如果不是张量类型，可以根据实际情况进行处理，这里假设是numpy数组并创建全零数组
+                   
                     if isinstance(xs[v], np.ndarray):
                         zero_array = np.random.randn(*xs[v].shape) * 0.01
                         new_xs.append(zero_array)
@@ -101,7 +101,7 @@ def setup_seed(seed):
 
 dataset, dims, view, data_size, class_num = load_data(args.dataset)
 
-# 生成不完整模态样本
+
 incomplete_dataset = generate_incomplete_samples(dataset)
 
 data_loader = torch.utils.data.DataLoader(
@@ -257,7 +257,7 @@ for i in range(T):
         epoch += 1
     new_pseudo_label = make_pseudo_label(model, device)
 
-    # 新增步骤：对不完整样本进行插值处理
+    
     complete_dataset = data_loader.dataset
     interpolated_dataset = interpolate_incomplete_samples(model, device, incomplete_dataset, view, complete_dataset,
                                                            alpha=0.1)
@@ -265,7 +265,7 @@ for i in range(T):
     while epoch <= args.mse_epochs + args.con_epochs + args.tune_epochs:
         fine_tuning(epoch, new_pseudo_label)
         if epoch == args.mse_epochs + args.con_epochs + args.tune_epochs:
-            # 使用插值后的数据集进行验证
+            
             acc, nmi, pur = valid(model, device, interpolated_dataset, view, data_size, class_num, eval_h=False)
             state = model.state_dict()
             torch.save(state, './models/' + args.dataset + '.pth')
