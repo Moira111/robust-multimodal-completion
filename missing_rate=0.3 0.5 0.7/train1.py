@@ -1,5 +1,3 @@
-
-
 import torch
 import argparse
 import numpy as np
@@ -26,8 +24,8 @@ parser.add_argument('--temperature_l', type=float, default=1.0)
 parser.add_argument('--lr', type=float, default=1e-3)
 parser.add_argument('--weight_decay', type=float, default=1e-5)
 parser.add_argument('--seed', type=int, default=42)
-parser.add_argument('--mse_epochs', type=int, default=20)
-parser.add_argument('--con_epochs', type=int, default=10)
+parser.add_argument('--mse_epochs', type=int, default=10)
+parser.add_argument('--con_epochs', type=int, default=5)
 parser.add_argument('--consistency_weight', type=float, default=0.2)
 args = parser.parse_args()
 
@@ -111,7 +109,7 @@ def main():
 
         train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True, collate_fn=collate_fn)
 
-        
+
         model.train()
         for epoch in range(args.mse_epochs):
             total_loss = 0.0
@@ -125,7 +123,7 @@ def main():
                 total_loss += loss.item()
             print(f"[MSE] Epoch {epoch + 1} Loss: {total_loss / len(train_loader):.4f}")
 
-        
+
         for epoch in range(args.con_epochs):
             model.train()
             total_loss = 0.0
@@ -147,6 +145,7 @@ def main():
         align_loss = feature_alignment_loss(model, train_loader, device, view)
         print(f"[Align] Feature Align Loss: {align_loss:.4f}")
 
+
         acc, nmi, pur = valid(model, device, [(x, y, i) for (x, y, i, m) in train_dataset], view, data_size, class_num)
         stage_results.append((stage_rate, acc, nmi, pur))
         torch.cuda.synchronize()
@@ -154,7 +153,6 @@ def main():
         max_mem = torch.cuda.max_memory_allocated() / 1024 / 1024  # MB
         print(f"\n[统计] Total training time: {end_time - start_time:.2f}s")
         print(f"[统计] Peak GPU memory usage: {max_mem:.2f} MB")
-
 
     print("\n=== Final Evaluation per Missing Rate Stage ===")
     for r in stage_results:
