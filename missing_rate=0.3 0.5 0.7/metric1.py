@@ -98,7 +98,7 @@ def valid(model, device, dataset, view, data_size, class_num, eval_h=False):
             batch_size=256,
             shuffle=False,
         )
-    # 这里假设inference函数已经被修改为返回与填补过程相关的结果
+   
     total_pred, pred_vectors, high_level_vectors, labels_vector, low_level_vectors = inference(test_loader, model, device, view, data_size)
     if eval_h:
         print("Clustering results on low - level features of each view:")
@@ -106,7 +106,7 @@ def valid(model, device, dataset, view, data_size, class_num, eval_h=False):
         for v in range(view):
             kmeans = KMeans(n_clusters=class_num, n_init=100)
             y_pred = kmeans.fit_predict(low_level_vectors[v])
-            # 假设evaluate函数被修改为评估填补相关指标
+            
             nmi, ari, acc, pur = evaluate(labels_vector, y_pred)
             print('ACC{} = {:.4f} NMI{} = {:.4f} ARI{} = {:.4f} PUR{}={:.4f}'.format(v + 1, acc,
                                                                                      v + 1, nmi,
@@ -132,7 +132,7 @@ def valid(model, device, dataset, view, data_size, class_num, eval_h=False):
                                                                                      v + 1, pur))
 
 
-    # 假设这里的labels_vector与填补过程相关
+   
     print("Clustering results on semantic labels: " + str(labels_vector.shape))
     nmi, ari, acc, pur = evaluate(labels_vector, total_pred)
     print('ACC = {:.4f} NMI = {:.4f} ARI = {:.4f} PUR={:.4f}'.format(acc, nmi, ari, pur))
@@ -146,7 +146,7 @@ def interpolate_incomplete_samples(model, device, incomplete_dataset, view, comp
     model.eval()
     scaler = MinMaxScaler()
 
-    # 提取完整样本特征
+   
     with torch.no_grad():
         complete_features = []
         complete_xs_list = []
@@ -164,13 +164,13 @@ def interpolate_incomplete_samples(model, device, incomplete_dataset, view, comp
 
     complete_features = torch.stack(complete_features)
 
-    # 对每个不完整样本进行插补
+    
     for incomplete_sample in incomplete_dataset:
         xs, y, idx = incomplete_sample
-        mask = [x is not None for x in xs]  # None 标识缺失
+        mask = [x is not None for x in xs]  
         missing_views = [v for v, present in enumerate(mask) if not present]
 
-        # 提取当前样本特征
+       
         feature_concat = []
         with torch.no_grad():
             for v in range(view):
@@ -180,25 +180,25 @@ def interpolate_incomplete_samples(model, device, incomplete_dataset, view, comp
                 feature_concat.append(h)
         feature_current = torch.cat(feature_concat).cpu()
 
-        # 相似度计算
+      
         sims = F.cosine_similarity(feature_current.unsqueeze(0), complete_features).numpy()
         top_idx = np.argsort(sims)[-top_k:]
         weights = sims[top_idx]
         weights = scaler.fit_transform(weights.reshape(-1, 1)).reshape(-1)
         weights = weights / weights.sum()
 
-        # 对每个缺失视图插值
+        
         new_xs = []
         for v in range(view):
             if mask[v]:
                 new_xs.append(xs[v])
             else:
-                # 插补来自 top-k 加权平均
+               
                 candidates = [complete_xs_list[i][v] for i in top_idx]
                 interpolated = sum(w * candidates[i] for i, w in enumerate(weights))
                 new_xs.append(interpolated)
 
         interpolated_dataset.append((new_xs, y, idx))
-        confidence_scores.append(weights.mean())  # 简单平均作为置信度
+        confidence_scores.append(weights.mean())  
 
     return interpolated_dataset, confidence_scores
