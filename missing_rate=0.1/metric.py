@@ -98,7 +98,7 @@ def valid(model, device, dataset, view, data_size, class_num, eval_h=False):
             batch_size=256,
             shuffle=False,
         )
-    # 这里假设inference函数已经被修改为返回与填补过程相关的结果
+   
     total_pred, pred_vectors, high_level_vectors, labels_vector, low_level_vectors = inference(test_loader, model, device, view, data_size)
     if eval_h:
         print("Clustering results on low - level features of each view:")
@@ -106,7 +106,7 @@ def valid(model, device, dataset, view, data_size, class_num, eval_h=False):
         for v in range(view):
             kmeans = KMeans(n_clusters=class_num, n_init=100)
             y_pred = kmeans.fit_predict(low_level_vectors[v])
-            # 假设evaluate函数被修改为评估填补相关指标
+           
             nmi, ari, acc, pur = evaluate(labels_vector, y_pred)
             print('ACC{} = {:.4f} NMI{} = {:.4f} ARI{} = {:.4f} PUR{}={:.4f}'.format(v + 1, acc,
                                                                                      v + 1, nmi,
@@ -132,7 +132,7 @@ def valid(model, device, dataset, view, data_size, class_num, eval_h=False):
                                                                                      v + 1, pur))
 
 
-    # 假设这里的labels_vector与填补过程相关
+   
     print("Clustering results on semantic labels: " + str(labels_vector.shape))
     nmi, ari, acc, pur = evaluate(labels_vector, total_pred)
     print('ACC = {:.4f} NMI = {:.4f} ARI = {:.4f} PUR={:.4f}'.format(acc, nmi, ari, pur))
@@ -147,62 +147,62 @@ def interpolate_incomplete_samples(model, device, incomplete_dataset, view, comp
         incomplete_xs, incomplete_y, _ = incomplete_sample
         complete_xs, complete_y, _ = complete_sample
 
-        # 特征提取与归一化
+      
         hs_missing = []
         hs_complete = []
         with torch.no_grad():
             for v in range(view):
-                # 提取缺失样本和完整样本的高级特征
+               
                 z_miss = model.encoders[v](incomplete_xs[v].to(device))
                 z_comp = model.encoders[v](complete_xs[v].to(device))
 
-                # 多尺度特征归一化
+               
                 h_miss = F.normalize(model.feature_contrastive_module(z_miss), p=2, dim=-1)
                 h_comp = F.normalize(model.feature_contrastive_module(z_comp).view(1, -1), p=2, dim=1)
 
-                # 特征增强
+             
                 h_miss = h_miss + 0.1 * torch.randn_like(h_miss)
                 h_comp = h_comp + 0.1 * torch.randn_like(h_comp)
 
                 hs_missing.append(h_miss.cpu())
                 hs_complete.append(h_comp.cpu())
 
-        # 多模态相似度融合计算
+       
         similarities = []
         for v in range(view):
-            if torch.all(incomplete_xs[v] == 0):  # 仅处理缺失模态
-                # 欧氏距离（反向相似度）
+            if torch.all(incomplete_xs[v] == 0): 
+                
                 euclidean_sim = 1 / (1 + torch.norm(hs_missing[v] - hs_complete[v], p=2))
 
-                # 余弦相似度
+               
                 cosine_sim = F.cosine_similarity(hs_missing[v], hs_complete[v], dim=0)
 
-                # 互信息估计
+               
                 joint = torch.histc(hs_missing[v] * hs_complete[v], bins=10)
                 marginal = torch.histc(hs_missing[v], bins=10) * torch.histc(hs_complete[v], bins=10)
                 mi = torch.sum(joint * torch.log(joint / (marginal + 1e-10) + 1e-10))
 
-                # 相似度融合
+               
                 combined_sim = 0.4 * euclidean_sim + 0.4 * cosine_sim + 0.2 * mi
                 similarities.append(combined_sim)
 
-        # 自适应权重分配
+        
         if similarities:
-            weights = F.softmax(torch.stack(similarities) * 10, dim=0)  # 温度系数增强区分度
+            weights = F.softmax(torch.stack(similarities) * 10, dim=0)  
             aggregated = sum(w * c for w, c in zip(weights, complete_xs))
 
-            # 非线性插值增强
-            gate = torch.sigmoid(aggregated)  # 门控机制
-            residual = F.gelu(aggregated)  # 非线性变换
+            
+            gate = torch.sigmoid(aggregated)  
+            residual = F.gelu(aggregated)  
             interpolated = (1 - alpha) * incomplete_xs[v] + alpha * (gate * aggregated + (1 - gate) * residual)
         else:
             interpolated = incomplete_xs[v]
 
-        # 构建新样本
+        
         new_xs = []
         for v in range(view):
             if torch.all(incomplete_xs[v] == 0):
-                # 特征增强层
+                
                 new_xs.append(F.layer_norm(interpolated, interpolated.shape[-1:]))
             else:
                 new_xs.append(incomplete_xs[v])
