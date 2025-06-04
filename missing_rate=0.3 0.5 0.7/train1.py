@@ -1,4 +1,4 @@
-# 引入 Cross-View Consistency Loss（路线一）优化版本
+
 
 import torch
 import argparse
@@ -12,10 +12,10 @@ from metric1 import valid
 from dataloader1 import load_data
 import time
 
-# 设置设备
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# 参数配置
+
 parser = argparse.ArgumentParser(description='Multi-modal Clustering')
 parser.add_argument('--dataset', default='BDGP')
 parser.add_argument('--batch_size', type=int, default=256)
@@ -31,7 +31,7 @@ parser.add_argument('--con_epochs', type=int, default=10)
 parser.add_argument('--consistency_weight', type=float, default=0.2)
 args = parser.parse_args()
 
-# 固定随机种子
+
 def setup_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -41,7 +41,7 @@ def setup_seed(seed):
 
 setup_seed(args.seed)
 
-# 不完整样本生成函数，返回 mask 信息
+
 def generate_incomplete_samples(dataset, view_num, missing_rate):
     new_dataset = []
     for sample in dataset:
@@ -57,7 +57,7 @@ def generate_incomplete_samples(dataset, view_num, missing_rate):
         new_dataset.append((new_xs, y, idx, mask.astype(np.float32)))
     return new_dataset
 
-# 特征一致性约束
+
 def cross_view_consistency_loss(qs):
     total_loss = 0.0
     for i in range(len(qs)):
@@ -65,7 +65,7 @@ def cross_view_consistency_loss(qs):
             total_loss += F.mse_loss(qs[i], qs[j])
     return total_loss / (len(qs) * (len(qs) - 1) / 2)
 
-# 特征对齐监督损失
+
 def feature_alignment_loss(model, dataloader, device, view):
     model.train()
     total_loss = 0.0
@@ -86,7 +86,7 @@ def feature_alignment_loss(model, dataloader, device, view):
         total_loss += align_loss.item()
     return total_loss / len(dataloader)
 
-# 主流程
+
 def main():
     dataset, dims, view, data_size, class_num = load_data(args.dataset)
     model = Network(view, dims, args.feature_dim, args.high_feature_dim, class_num, device).to(device)
@@ -111,7 +111,7 @@ def main():
 
         train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True, collate_fn=collate_fn)
 
-        # MSE阶段
+        
         model.train()
         for epoch in range(args.mse_epochs):
             total_loss = 0.0
@@ -125,7 +125,7 @@ def main():
                 total_loss += loss.item()
             print(f"[MSE] Epoch {epoch + 1} Loss: {total_loss / len(train_loader):.4f}")
 
-        # 对比训练 + mask-aware + cross-view consistency
+        
         for epoch in range(args.con_epochs):
             model.train()
             total_loss = 0.0
