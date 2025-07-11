@@ -111,49 +111,49 @@ class Caltech(Dataset):
 
 def load_data(dataset):
     if dataset == "BDGP":
-        dataset = BDGP('D:/ppt/data/')
+        dataset = BDGP('data/')
         dims = [1750, 79]
         view = 2
         data_size = 2500
         class_num = 5
     elif dataset == "MNIST-USPS":
-        dataset = MNIST_USPS('D:/ppt/data/')
+        dataset = MNIST_USPS('data/')
         dims = [784, 784]
         view = 2
         class_num = 10
         data_size = 5000
     elif dataset == "CCV":
-        dataset = CCV('D:/ppt/data/')
+        dataset = CCV('data/')
         dims = [5000, 5000, 4000]
         view = 3
         data_size = 6773
         class_num = 20
     elif dataset == "Fashion":
-        dataset = Fashion('D:/ppt/data/')
+        dataset = Fashion('data/')
         dims = [784, 784, 784]
         view = 3
         data_size = 10000
         class_num = 10
     elif dataset == "Caltech-2V":
-        dataset = Caltech('D:/ppt/data/Caltech-5V.mat', view=2)
+        dataset = Caltech('data/Caltech-5V.mat', view=2)
         dims = [40, 254]
         view = 2
         data_size = 1400
         class_num = 7
     elif dataset == "Caltech-3V":
-        dataset = Caltech('D:/ppt/data/Caltech-5V.mat', view=3)
+        dataset = Caltech('data/Caltech-5V.mat', view=3)
         dims = [40, 254, 928]
         view = 3
         data_size = 1400
         class_num = 7
     elif dataset == "Caltech-4V":
-        dataset = Caltech('D:/ppt/data/Caltech-5V.mat', view=4)
+        dataset = Caltech('data/Caltech-5V.mat', view=4)
         dims = [40, 254, 928, 512]
         view = 4
         data_size = 1400
         class_num = 7
     elif dataset == "Caltech-5V":
-        dataset = Caltech('D:/ppt/data/Caltech-5V.mat', view=5)
+        dataset = Caltech('data/Caltech-5V.mat', view=5)
         dims = [40, 254, 928, 512, 1984]
         view = 5
         data_size = 1400
